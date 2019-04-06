@@ -3,6 +3,6 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-rootProject.name = 'cachepdp'
+rootProject.name = 'cache-pdp'
 
 include 'eshop-inventory'
