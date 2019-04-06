@@ -1,0 +1,11 @@
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.0.0'
+    runtimeOnly 'mysql:mysql-connector-java:5.1.34'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    compile 'com.alibaba:fastjson:1.1.43'
+    compile 'redis.clients:jedis'
+}

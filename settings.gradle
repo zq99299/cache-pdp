@@ -6,3 +6,4 @@ pluginManagement {
 rootProject.name = 'cache-pdp'
 
 include 'eshop-inventory'
+include 'eshop-cache'
