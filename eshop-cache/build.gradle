@@ -8,4 +8,12 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     compile 'com.alibaba:fastjson:1.1.43'
     compile 'redis.clients:jedis'
+    compile 'net.sf.ehcache:ehcache:2.8.3'
+    compile 'org.springframework:spring-context-support'
+    // Timeout expired while fetching topic metadata
+    compile 'org.apache.kafka:kafka_2.9.2:0.8.1.1'
+//    compile 'org.apache.kafka:kafka'
+    // https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-messaging.html#boot-features-kafka
+    // org.springframework.boot.autoconfigure.kafka.KafkaProperties
+//    compile 'org.springframework.kafka:spring-kafka'
 }
