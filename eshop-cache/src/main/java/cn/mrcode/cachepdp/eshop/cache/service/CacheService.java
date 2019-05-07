@@ -50,4 +50,14 @@ public interface CacheService {
      * 将店铺信息保存到redis中
      */
     void saveShopInfo2ReidsCache(ShopInfo shopInfo);
+
+    /**
+     * 从 redis 中获取商品
+     */
+    ProductInfo getProductInfoOfReidsCache(Long productId);
+
+    /**
+     * 从 redis 中获取店铺信息
+     */
+    ShopInfo getShopInfoOfReidsCache(Long shopId);
 }

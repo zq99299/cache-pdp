@@ -1,5 +1,6 @@
 package cn.mrcode.cachepdp.eshop.cache.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 
 import org.springframework.cache.annotation.CachePut;
@@ -88,5 +89,19 @@ public class CacheServiceImpl implements CacheService {
     public void saveShopInfo2ReidsCache(ShopInfo shopInfo) {
         String key = "shop_info_" + shopInfo.getId();
         jedisCluster.set(key, JSONObject.toJSONString(shopInfo));
+    }
+
+    @Override
+    public ProductInfo getProductInfoOfReidsCache(Long productId) {
+        String key = "product_info_" + productId;
+        String json = jedisCluster.get(key);
+        return JSON.parseObject(json, ProductInfo.class);
+    }
+
+    @Override
+    public ShopInfo getShopInfoOfReidsCache(Long shopId) {
+        String key = "shop_info_" + shopId;
+        String json = jedisCluster.get(key);
+        return JSON.parseObject(json, ShopInfo.class);
     }
 }
