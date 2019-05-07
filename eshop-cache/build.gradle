@@ -16,4 +16,5 @@ dependencies {
     // https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-messaging.html#boot-features-kafka
     // org.springframework.boot.autoconfigure.kafka.KafkaProperties
 //    compile 'org.springframework.kafka:spring-kafka'
+    compile 'org.apache.zookeeper:zookeeper:3.4.5'
 }
