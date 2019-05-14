@@ -5,6 +5,10 @@ import com.alibaba.fastjson.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
+
+import cn.mrcode.cachepdp.eshop.cache.ZooKeeperSession;
 import cn.mrcode.cachepdp.eshop.cache.model.ProductInfo;
 import cn.mrcode.cachepdp.eshop.cache.model.ShopInfo;
 import cn.mrcode.cachepdp.eshop.cache.service.CacheService;
@@ -64,11 +68,43 @@ public class KafkaMessageProcessor implements Runnable {
         // 直接用注释模拟：getProductInfo?productId=1，传递过去
         // 商品信息服务，一般来说就会去查询数据库，去获取productId=1的商品信息，然后返回回来
 
-        String productInfoJSON = "{\"id\": 1, \"name\": \"iphone7手机\", \"price\": 5599, \"pictureList\":\"a.jpg,b.jpg\", \"specification\": \"iphone7的规格\", \"service\": \"iphone7的售后服务\", \"color\": \"红色,白色,黑色\", \"size\": \"5.5\", \"shopId\": 1}";
+        // 增加了一个 modifyTime 字段，来比较数据修改先后顺序
+        String productInfoJSON = "{\"id\": 1, \"name\": \"iphone7手机\", \"price\": 5599, \"pictureList\":\"a.jpg,b.jpg\", \"specification\": \"iphone7的规格\", \"service\": \"iphone7的售后服务\", \"color\": \"红色,白色,黑色\", \"size\": \"5.5\", \"shopId\": 1," +
+                "\"modifyTime\":\"2019-05-13 22:00:00\"}";
         ProductInfo productInfo = JSONObject.parseObject(productInfoJSON, ProductInfo.class);
-        cacheService.saveProductInfo2LocalCache(productInfo);
-        log.info("获取刚保存到本地缓存的商品信息：" + cacheService.getProductInfoFromLocalCache(productId));
-        cacheService.saveProductInfo2ReidsCache(productInfo);
+
+        // 加锁
+        ZooKeeperSession zks = ZooKeeperSession.getInstance();
+        zks.acquireDistributedLock(productId);
+        try {
+            log.info("kafka 休眠 10 秒");
+            TimeUnit.SECONDS.sleep(10);
+            // 先获取一次 redis ，防止其他实例已经放入数据了
+            ProductInfo existedProduct = cacheService.getProductInfoOfReidsCache(productId);
+            if (existedProduct != null) {
+                // 判定通过消息获取到的数据版本和 redis 中的谁最新
+                Date existedModifyTime = existedProduct.getModifyTime();
+                Date modifyTime = productInfo.getModifyTime();
+                // 如果本次获取到的修改时间大于 redis 中的，那么说明此数据是最新的，可以放入 redis 中
+                if (modifyTime.after(existedModifyTime)) {
+                    cacheService.saveProductInfo2LocalCache(productInfo);
+                    log.info("最新数据覆盖 redis 中的数据：" + cacheService.getProductInfoFromLocalCache(productId));
+                    cacheService.saveProductInfo2ReidsCache(productInfo);
+                } else {
+                    log.info("数据未变更过");
+                }
+            } else {
+                // redis 中没有数据，直接放入
+                cacheService.saveProductInfo2LocalCache(productInfo);
+                log.info("获取刚保存到本地缓存的商品信息：" + cacheService.getProductInfoFromLocalCache(productId));
+                cacheService.saveProductInfo2ReidsCache(productInfo);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            // 最后释放锁
+            zks.releaseDistributedLock(productId);
+        }
     }
 
     /**

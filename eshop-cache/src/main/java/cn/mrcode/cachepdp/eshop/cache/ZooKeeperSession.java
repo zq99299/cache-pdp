@@ -68,7 +68,7 @@ public class ZooKeeperSession {
                     // 休眠 20 毫秒后再次尝试创建
                     zookeeper.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
                 } catch (Exception e1) {
-                    e1.printStackTrace();
+//                    e1.printStackTrace();
                     count++;
                     continue;
                 }

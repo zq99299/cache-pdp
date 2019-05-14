@@ -11,10 +11,15 @@ dependencies {
     compile 'net.sf.ehcache:ehcache:2.8.3'
     compile 'org.springframework:spring-context-support'
     // Timeout expired while fetching topic metadata
-    compile 'org.apache.kafka:kafka_2.9.2:0.8.1.1'
+    compile ('org.apache.kafka:kafka_2.9.2:0.8.1.1'){
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+    }
+
 //    compile 'org.apache.kafka:kafka'
     // https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-messaging.html#boot-features-kafka
     // org.springframework.boot.autoconfigure.kafka.KafkaProperties
 //    compile 'org.springframework.kafka:spring-kafka'
-    compile 'org.apache.zookeeper:zookeeper:3.4.5'
+    compile ('org.apache.zookeeper:zookeeper:3.4.5'){
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+    }
 }

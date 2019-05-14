@@ -1,5 +1,7 @@
 package cn.mrcode.cachepdp.eshop.cache.controller;
 
+import com.alibaba.fastjson.JSONObject;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,8 @@ public class CacheController {
     private Logger log = LoggerFactory.getLogger(getClass());
     @Autowired
     private CacheService cacheService;
+    @Autowired
+    private RebuildCache rebuildCache;
 
     @RequestMapping("/testPutCache")
     @ResponseBody
@@ -50,8 +54,11 @@ public class CacheController {
         }
         if (productInfo == null) {
             // 两级缓存中都获取不到数据，那么就需要从数据源重新拉取数据，重建缓存
-            // 但是这里暂时不讲
-            log.info("缓存重建 商品信息");
+            // 假设这里从数据库中获取的数据
+            String productInfoJSON = "{\"id\": 1, \"name\": \"iphone7手机\", \"price\": 5599, \"pictureList\":\"a.jpg,b.jpg\", \"specification\": \"iphone7的规格\", \"service\": \"iphone7的售后服务\", \"color\": \"红色,白色,黑色\", \"size\": \"5.5\", \"shopId\": 1," +
+                    "\"modifyTime\":\"2019-05-13 22:00:00\"}";
+            productInfo = JSONObject.parseObject(productInfoJSON, ProductInfo.class);
+            rebuildCache.put(productInfo);
         }
         return productInfo;
     }

@@ -1,5 +1,7 @@
 package cn.mrcode.cachepdp.eshop.cache.model;
 
+import java.util.Date;
+
 /**
  * 商品信息
  * @author Administrator
@@ -16,6 +18,7 @@ public class ProductInfo {
 	private String color;
 	private String size;
 	private Long shopId;
+	private Date modifyTime;
 	
 	public ProductInfo() {
 		
@@ -88,12 +91,16 @@ public class ProductInfo {
 		this.shopId = shopId;
 	}
 
+	public Date getModifyTime() {
+		return modifyTime;
+	}
+
+	public void setModifyTime(Date modifyTime) {
+		this.modifyTime = modifyTime;
+	}
+
 	@Override
 	public String toString() {
-		return "ProductInfo [id=" + id + ", name=" + name + ", price=" + price
-				+ ", pictureList=" + pictureList + ", specification="
-				+ specification + ", service=" + service + ", color=" + color
-				+ ", size=" + size + ", shopId=" + shopId + "]";
+		return super.toString();
 	}
-	
 }
