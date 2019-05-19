@@ -1,0 +1,23 @@
+//指定编译的编码
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+version = '1.0.0'
+sourceCompatibility = '1.7'
+
+dependencies {
+    // 打包的时候不打包该依赖
+    compileOnly 'org.apache.storm:storm-core:1.1.0'
+    compile 'commons-collections:commons-collections:3.2.1'
+}
+
+jar {
+    manifestContentCharset 'utf-8'
+    metadataCharset 'utf-8'
+    manifest {
+        attributes(
+                "Manifest-Version": 1.0,
+                "Main-Class": "cn.mrcode.cachepdp.storm.helloword.WordCountTopology")
+    }
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+}
