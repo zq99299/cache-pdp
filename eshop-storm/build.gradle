@@ -1,0 +1,31 @@
+//指定编译的编码
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+version = '1.0.0'
+sourceCompatibility = '1.7'
+
+dependencies {
+    // 打包的时候不打包该依赖
+//    compileOnly 'org.apache.storm:storm-core:1.1.0'
+    compile 'org.apache.storm:storm-core:1.1.0'
+    compile 'commons-collections:commons-collections:3.2.1'
+    compile 'com.alibaba:fastjson:1.1.43'
+    compile ('org.apache.kafka:kafka_2.9.2:0.8.1.1'){
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+    }
+    compile ('org.apache.zookeeper:zookeeper:3.4.5'){
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+    }
+}
+
+jar {
+    manifestContentCharset 'utf-8'
+    metadataCharset 'utf-8'
+    manifest {
+        attributes(
+                "Manifest-Version": 1.0,
+                "Main-Class": "cn.mrcode.cachepdp.eshop.storm.HotProductTopology")
+    }
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+}

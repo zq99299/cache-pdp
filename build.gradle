@@ -24,23 +24,23 @@ allprojects {
     }
 }
 
-configure(subprojects.findAll {it.name != 'storm-helloword'}) {
-    apply plugin: 'org.springframework.boot'
-}
-subprojects {
-        buildscript {
-            ext {
-                springBootVersion = '2.1.3.RELEASE'
-            }
-            repositories {
-                mavenCentral()
-            }
-            dependencies {
-                classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
-            }
-        }
-        apply plugin: 'io.spring.dependency-management'
-        apply plugin: 'java'
-        sourceCompatibility = '1.8'
 
+subprojects { p ->
+    buildscript {
+        ext {
+            springBootVersion = '2.1.3.RELEASE'
+        }
+        repositories {
+            mavenCentral()
+        }
+        dependencies {
+            classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        }
+    }
+    apply plugin: 'io.spring.dependency-management'
+    apply plugin: 'java'
+    if (p.name != 'storm-helloword' || p.name != 'eshop-storm') {
+        apply plugin: 'org.springframework.boot'
+    }
+    sourceCompatibility = '1.8'
 }
