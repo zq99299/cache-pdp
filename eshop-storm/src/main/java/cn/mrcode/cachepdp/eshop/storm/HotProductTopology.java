@@ -26,12 +26,12 @@ public class HotProductTopology {
         builder.setSpout(AccessLogConsumerSpout.class.getSimpleName(),
                 new AccessLogConsumerSpout(), 2);
         builder.setBolt(LogParseBolt.class.getSimpleName(),
-                new LogParseBolt(), 5)
-                .setNumTasks(5)
+                new LogParseBolt(), 2)
+                .setNumTasks(2)
                 .shuffleGrouping(AccessLogConsumerSpout.class.getSimpleName());
         builder.setBolt(ProductCountBolt.class.getSimpleName(),
-                new ProductCountBolt(), 5)
-                .setNumTasks(5)
+                new ProductCountBolt(), 2)
+                .setNumTasks(2)
                 .fieldsGrouping(LogParseBolt.class.getSimpleName(), new Fields("productId"));
 
         Config conf = new Config();

@@ -99,6 +99,12 @@ public class ZooKeeperSession {
      */
     public void setNodeData(String path, String data) {
         try {
+            Stat exists = zookeeper.exists(path, false);
+            if (exists == null) {
+                // 节点不存，先创建 PERSISTENT 持久连接
+                zookeeper.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                return;
+            }
             zookeeper.setData(path, data.getBytes(), -1);
         } catch (KeeperException e) {
             e.printStackTrace();
@@ -118,9 +124,33 @@ public class ZooKeeperSession {
         return null;
     }
 
-    private static ZooKeeperSession instance = new ZooKeeperSession();
+    /**
+     * 封装单例的静态内部类
+     *
+     * @author Administrator
+     */
+    private static class Singleton {
 
+        private static ZooKeeperSession instance;
+
+        static {
+            instance = new ZooKeeperSession();
+        }
+
+        public static ZooKeeperSession getInstance() {
+            return instance;
+        }
+
+    }
+
+    /**
+     * 获取单例
+     */
     public static ZooKeeperSession getInstance() {
-        return instance;
+        return Singleton.getInstance();
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        ZooKeeperSession instance = ZooKeeperSession.getInstance();
     }
 }

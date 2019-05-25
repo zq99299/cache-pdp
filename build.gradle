@@ -39,7 +39,8 @@ subprojects { p ->
     }
     apply plugin: 'io.spring.dependency-management'
     apply plugin: 'java'
-    if (p.name != 'storm-helloword' || p.name != 'eshop-storm') {
+
+    if (p.name != 'storm-helloword' && p.name != 'eshop-storm') {
         apply plugin: 'org.springframework.boot'
     }
     sourceCompatibility = '1.8'

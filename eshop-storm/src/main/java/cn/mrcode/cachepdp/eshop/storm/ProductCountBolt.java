@@ -23,12 +23,13 @@ import java.util.Map;
  */
 public class ProductCountBolt extends BaseRichBolt {
     private LRUMap<Long, Long> countMap = new LRUMap(100);
-    private ZooKeeperSession zooKeeperSession = ZooKeeperSession.getInstance();
+    private ZooKeeperSession zooKeeperSession;
     private int taskId = -1;
 
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         taskId = context.getThisTaskId();
+        zooKeeperSession = ZooKeeperSession.getInstance();
         // 启动一个线程，1 分钟计算一次
         topnStart();
         // 上报自己的节点 id 到列表中
@@ -70,8 +71,8 @@ public class ProductCountBolt extends BaseRichBolt {
 
     private void writeTaskPathToZk() {
         // 由于该操作是并发操作，需要通过分布式锁来写入
-        final String lockPath = "hot-product-task-list-lock";
-        final String taskListNode = "hot-product-task-list";
+        final String lockPath = "/hot-product-task-list-lock";
+        final String taskListNode = "/hot-product-task-list";
         zooKeeperSession.acquireDistributedLock(lockPath);
         String nodeData = zooKeeperSession.getNodeData(taskListNode);
         // 已经存在数据的话，把自己的 task id 追加到尾部
@@ -87,9 +88,12 @@ public class ProductCountBolt extends BaseRichBolt {
     private void writeTopnToZk(Map.Entry<Long, Long>[] topn) {
         List<Long> proudcts = new ArrayList<>();
         for (Map.Entry<Long, Long> t : topn) {
+            if (t == null) {
+                continue;
+            }
             proudcts.add(t.getKey());
         }
-        final String taskNodePath = "hot-product-task-" + taskId;
+        final String taskNodePath = "/hot-product-task-" + taskId;
         zooKeeperSession.setNodeData(taskNodePath, JSON.toJSONString(proudcts));
     }
 

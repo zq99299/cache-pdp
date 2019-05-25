@@ -5,6 +5,7 @@ import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
+import org.apache.zookeeper.data.Stat;
 
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
@@ -82,7 +83,68 @@ public class ZooKeeperSession {
      * 释放分布式锁
      */
     public void releaseDistributedLock(Long productId) {
-        String path = "/product-lock-" + productId;
+        try {
+            String path = "/product-lock-" + productId;
+            zookeeper.delete(path, -1);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (KeeperException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 获取分布式锁
+     */
+    public void acquireDistributedLock(String path) {
+        byte[] data = "".getBytes();
+        try {
+            // 创建一个临时节点，后面两个参数一个安全策略，一个临时节点类型
+            // EPHEMERAL：客户端被断开时，该节点自动被删除
+            zookeeper.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+            System.out.println("获取锁成功 [path=" + path + "]");
+        } catch (Exception e) {
+            e.printStackTrace();
+            // 如果锁已经被创建，那么将异常
+            // 循环等待锁的释放
+            int count = 0;
+            while (true) {
+                try {
+                    TimeUnit.MILLISECONDS.sleep(20);
+                    // 休眠 20 毫秒后再次尝试创建
+                    zookeeper.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+                } catch (Exception e1) {
+//                    e1.printStackTrace();
+                    count++;
+                    continue;
+                }
+                System.out.println("获取锁成功 [path=" + path + "] 尝试了 " + count + " 次.");
+                break;
+            }
+        }
+    }
+
+    /**
+     * 获取分布式锁；快速失败，不等待
+     */
+    public boolean acquireFastFailDistributedLock(String path) {
+        byte[] data = "".getBytes();
+        try {
+            // 创建一个临时节点，后面两个参数一个安全策略，一个临时节点类型
+            // EPHEMERAL：客户端被断开时，该节点自动被删除
+            zookeeper.create(path, data, ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+            System.out.println("获取锁成功 [path=" + path + "]");
+            return true;
+        } catch (Exception e) {
+            System.out.println("获取锁失败 [path=" + path + "]");
+            return false;
+        }
+    }
+
+    /**
+     * 释放分布式锁
+     */
+    public void releaseDistributedLock(String path) {
         try {
             zookeeper.delete(path, -1);
         } catch (InterruptedException e) {
@@ -90,6 +152,36 @@ public class ZooKeeperSession {
         } catch (KeeperException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 写节点数据
+     */
+    public void setNodeData(String path, String data) {
+        try {
+            Stat exists = zookeeper.exists(path, false);
+            if (exists == null) {
+                // 节点不存，先创建 PERSISTENT 持久连接
+                zookeeper.create(path, data.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
+                return;
+            }
+            zookeeper.setData(path, data.getBytes(), -1);
+        } catch (KeeperException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String getNodeData(String path) {
+        try {
+            return new String(zookeeper.getData(path, false, new Stat()));
+        } catch (KeeperException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     private static ZooKeeperSession instance = new ZooKeeperSession();

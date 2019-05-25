@@ -101,6 +101,17 @@ public class ProductInfo {
 
 	@Override
 	public String toString() {
-		return super.toString();
+		return "ProductInfo{" +
+				"id=" + id +
+				", name='" + name + '\'' +
+				", price=" + price +
+				", pictureList='" + pictureList + '\'' +
+				", specification='" + specification + '\'' +
+				", service='" + service + '\'' +
+				", color='" + color + '\'' +
+				", size='" + size + '\'' +
+				", shopId=" + shopId +
+				", modifyTime=" + modifyTime +
+				'}';
 	}
 }
