@@ -12,6 +12,10 @@ import java.util.Arrays;
  */
 public class TopN {
     public static void main(String[] args) {
+        topn2();
+    }
+
+    public static void topn1() {
         /**
          * top n 简易算法：手写思路
          * top 3 列表： 5、3、1
@@ -33,6 +37,25 @@ public class TopN {
                     System.arraycopy(topn, j, topn, j + 1, n - (j + 1));
                     topn[j] = randomNum;
                     break;
+                }
+            }
+        }
+        System.out.println(Arrays.toString(topn));
+    }
+
+    public static void topn2() {
+        int n = 10;
+        int[] topn = new int[n];
+
+        // 循环 n 次，模拟有这么多数据需要计算
+        for (int i = 0; i < 100; i++) {
+            int randomNum = RandomUtils.nextInt(100);
+//            int randomNum = i;
+            for (int j = 0; j < topn.length; j++) {
+                int target = topn[j];
+                if (randomNum >= target) {
+                    topn[j] = randomNum;
+                    randomNum = target;
                 }
             }
         }
