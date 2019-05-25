@@ -44,7 +44,7 @@ public class HotProductTopology {
             conf.setMaxTaskParallelism(3);
             LocalCluster cluster = new LocalCluster();
             cluster.submitTopology("HotProductTopology", conf, builder.createTopology());
-            TimeUnit.SECONDS.sleep(60);
+            TimeUnit.SECONDS.sleep(60 * 3);
             cluster.shutdown();
         }
     }
