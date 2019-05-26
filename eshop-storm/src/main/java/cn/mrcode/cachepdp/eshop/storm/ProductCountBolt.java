@@ -9,11 +9,19 @@ import org.apache.storm.topology.base.BaseRichBolt;
 import org.apache.storm.trident.util.LRUMap;
 import org.apache.storm.tuple.Tuple;
 import org.apache.storm.utils.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+
+import cn.mrcode.cachepdp.eshop.storm.http.HttpClientUtils;
 
 /**
  * ${todo}
@@ -34,6 +42,7 @@ public class ProductCountBolt extends BaseRichBolt {
         topnStart();
         // 上报自己的节点 id 到列表中
         writeTaskPathToZk();
+
     }
 
     private void topnStart() {
@@ -111,5 +120,89 @@ public class ProductCountBolt extends BaseRichBolt {
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
 
+    }
+
+    /**
+     * 热点商品感知
+     */
+    private static class HotProductFindThread extends Thread {
+        private Logger logger = LoggerFactory.getLogger(getClass());
+        private LRUMap<Long, Long> countMap;
+
+        public HotProductFindThread(LRUMap<Long, Long> countMap) {
+            this.countMap = countMap;
+        }
+
+        @Override
+        public void run() {
+            List<Map.Entry<Long, Long>> countList = new ArrayList<>();
+            List<Long> hotPidList = new ArrayList<>();
+
+            while (true) {
+                Utils.sleep(5000);
+                // 1. 全局排序
+                countList.clear();
+                for (Map.Entry<Long, Long> entry : countMap.entrySet()) {
+                    countList.add(entry);
+                }
+                Collections.sort(countList, new Comparator<Map.Entry<Long, Long>>() {
+                    @Override
+                    public int compare(Map.Entry<Long, Long> o1, Map.Entry<Long, Long> o2) {
+                        return ~Long.compare(o1.getValue(), o2.getValue());
+                    }
+                });
+
+                // 2.计算后 95% 商品平均访值
+                int avg95Count = (int) (countList.size() * 0.95);
+                int avg95Total = 0;
+                // 从列表尾部开始循环 avg95Count 次
+                for (int i = countList.size() - 1; i >= countList.size() - avg95Count; i--) {
+                    avg95Total += countList.get(i).getValue();
+                }
+                // 后百分之 95 商品的平均访问值
+                int avg95Avg = avg95Total / avg95Count;
+                int threshold = 5; // 阈值
+
+                // 3. 计算热点商品
+                for (int i = 0; i < avg95Count; i++) {
+                    Map.Entry<Long, Long> entry = countList.get(i);
+                    if (entry.getValue() > avg95Avg * threshold) {
+                        logger.info("热点商品：" + entry);
+                        hotPidList.add(entry.getKey());
+                        // 推送热点商品信息到 所有 nginx 上
+                        pushHotToNginx(entry.getKey());
+                    }
+                }
+                logger.info("热点商品列表：" + hotPidList);
+            }
+        }
+
+        private void pushHotToNginx(Long pid) {
+            // 降级策略推送到分发层 nginx
+            String distributeNginxURL = "http://eshop-03/hot?productId=" + pid;
+            HttpClientUtils.sendGetRequest(distributeNginxURL);
+
+            // 获取商品信息
+            String cacheServiceURL = "http://192.168.0.99:6002/getProductInfo?productId=" + pid;
+            String response = HttpClientUtils.sendGetRequest(cacheServiceURL);
+
+            // 推送到应用层 nginx
+            String[] appNginxURLs = new String[]{
+                    "http://eshop-01/hot?productId=" + pid + "&productInfo=" + response,
+                    "http://eshop-02/hot?productId=" + pid + "&productInfo=" + response
+            };
+            for (String appNginxURL : appNginxURLs) {
+                HttpClientUtils.sendGetRequest(appNginxURL);
+            }
+        }
+
+        public static void main(String[] args) throws UnsupportedEncodingException {
+            // 获取商品信息
+            String cacheServiceURL = "http://192.168.0.99:6002/getProductInfo?productId=" + 1;
+            String response = HttpClientUtils.sendGetRequest(cacheServiceURL);
+
+            String url = "http://192.168.0.99:6002/test?productId=" + 1 + "&productInfo=" + URLEncoder.encode(response, "UTF-8");
+            HttpClientUtils.sendGetRequest(url);
+        }
     }
 }
