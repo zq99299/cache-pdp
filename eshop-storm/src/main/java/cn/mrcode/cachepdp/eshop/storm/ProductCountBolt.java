@@ -18,8 +18,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import cn.mrcode.cachepdp.eshop.storm.http.HttpClientUtils;
 
@@ -42,7 +44,7 @@ public class ProductCountBolt extends BaseRichBolt {
         topnStart();
         // 上报自己的节点 id 到列表中
         writeTaskPathToZk();
-
+        new HotProductFindThread(countMap).start();
     }
 
     private void topnStart() {
@@ -137,11 +139,15 @@ public class ProductCountBolt extends BaseRichBolt {
         public void run() {
             List<Map.Entry<Long, Long>> countList = new ArrayList<>();
             List<Long> hotPidList = new ArrayList<>();
-
+            Set<Long> lastTimeHotPids = new HashSet<>();
             while (true) {
                 Utils.sleep(5000);
+                if (countMap.size() < 2) {
+                    continue;
+                }
                 // 1. 全局排序
                 countList.clear();
+                hotPidList.clear();
                 for (Map.Entry<Long, Long> entry : countMap.entrySet()) {
                     countList.add(entry);
                 }
@@ -152,7 +158,8 @@ public class ProductCountBolt extends BaseRichBolt {
                     }
                 });
 
-                // 2.计算后 95% 商品平均访值
+                // 2.计算后 95% 商品平均访值,向上取整，至少 1 个商品
+                // 1 * 0.95 = 0.95 向上取整为 1.0
                 int avg95Count = (int) (countList.size() * 0.95);
                 int avg95Total = 0;
                 // 从列表尾部开始循环 avg95Count 次
@@ -161,35 +168,62 @@ public class ProductCountBolt extends BaseRichBolt {
                 }
                 // 后百分之 95 商品的平均访问值
                 int avg95Avg = avg95Total / avg95Count;
+                logger.info("后 95% 商品数量 {} 个，平均访问值为 {}", avg95Count, avg95Avg);
                 int threshold = 5; // 阈值
 
                 // 3. 计算热点商品
                 for (int i = 0; i < avg95Count; i++) {
                     Map.Entry<Long, Long> entry = countList.get(i);
                     if (entry.getValue() > avg95Avg * threshold) {
-                        logger.info("热点商品：" + entry);
+                        logger.info("发现一个热点商品：" + entry);
                         hotPidList.add(entry.getKey());
-                        // 推送热点商品信息到 所有 nginx 上
-                        pushHotToNginx(entry.getKey());
+                        if (!lastTimeHotPids.contains(entry.getKey())) {
+                            // 如果该商品已经是热点商品了，则不推送，新热点商品才推送
+                            // 这里根据具体业务要求进行定制
+                            // 推送热点商品信息到 所有 nginx 上
+                            pushHotToNginx(entry.getKey());
+                        }
                     }
                 }
                 logger.info("热点商品列表：" + hotPidList);
+
+                // 4. 热点商品消失，通知 nginx 取消热点缓存
+                if (lastTimeHotPids.size() > 0) {
+                    // 上一次有热点商品
+                    for (long lastTimeHotPid : lastTimeHotPids) {
+                        // 但是不在这一次的热点中了，说明热点消失了
+                        if (!hotPidList.contains(lastTimeHotPid)) {
+                            logger.info("一个热点商品消失了：" + lastTimeHotPid);
+                            String url = "http://eshop-cache03/cancel_hot?productId=" + lastTimeHotPid;
+                            HttpClientUtils.sendGetRequest(url);
+                        }
+                    }
+                }
+                lastTimeHotPids.clear();
+                for (Long pid : hotPidList) {
+                    lastTimeHotPids.add(pid);
+                }
             }
         }
 
         private void pushHotToNginx(Long pid) {
             // 降级策略推送到分发层 nginx
-            String distributeNginxURL = "http://eshop-03/hot?productId=" + pid;
+            String distributeNginxURL = "http://eshop-cache03/hot?productId=" + pid;
             HttpClientUtils.sendGetRequest(distributeNginxURL);
 
             // 获取商品信息
             String cacheServiceURL = "http://192.168.0.99:6002/getProductInfo?productId=" + pid;
             String response = HttpClientUtils.sendGetRequest(cacheServiceURL);
 
+            try {
+                response = URLEncoder.encode(response, "utf-8");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
             // 推送到应用层 nginx
             String[] appNginxURLs = new String[]{
-                    "http://eshop-01/hot?productId=" + pid + "&productInfo=" + response,
-                    "http://eshop-02/hot?productId=" + pid + "&productInfo=" + response
+                    "http://eshop-cache01/hot?productId=" + pid + "&productInfo=" + response,
+                    "http://eshop-cache02/hot?productId=" + pid + "&productInfo=" + response
             };
             for (String appNginxURL : appNginxURLs) {
                 HttpClientUtils.sendGetRequest(appNginxURL);
@@ -197,12 +231,7 @@ public class ProductCountBolt extends BaseRichBolt {
         }
 
         public static void main(String[] args) throws UnsupportedEncodingException {
-            // 获取商品信息
-            String cacheServiceURL = "http://192.168.0.99:6002/getProductInfo?productId=" + 1;
-            String response = HttpClientUtils.sendGetRequest(cacheServiceURL);
-
-            String url = "http://192.168.0.99:6002/test?productId=" + 1 + "&productInfo=" + URLEncoder.encode(response, "UTF-8");
-            HttpClientUtils.sendGetRequest(url);
+            System.out.println(Math.ceil(1 * 0.95));
         }
     }
 }
