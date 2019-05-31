@@ -1,20 +1,9 @@
-buildscript {
-    ext {
-        springBootVersion = '2.1.3.RELEASE'
-    }
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
-    }
-}
-
 allprojects {
     group = 'cn.mrcode.cachepdp'
     version = '0.0.1-SNAPSHOT'
 
     repositories {
+        mavenLocal()
         maven { url 'https://repo.spring.io/libs-snapshot' }
         maven { url "http://maven.aliyun.com/nexus/content/groups/public" }
         maven { url "https://maven.repository.redhat.com/ga/" }
@@ -26,22 +15,24 @@ allprojects {
 
 
 subprojects { p ->
-    buildscript {
-        ext {
-            springBootVersion = '2.1.3.RELEASE'
-        }
-        repositories {
-            mavenCentral()
-        }
-        dependencies {
-            classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
-        }
-    }
-    apply plugin: 'io.spring.dependency-management'
     apply plugin: 'java'
-
-    if (p.name != 'storm-helloword' && p.name != 'eshop-storm') {
-        apply plugin: 'org.springframework.boot'
-    }
+    apply plugin: 'idea'
     sourceCompatibility = '1.8'
+
+    //跳过所有文件的编译测试；不是跳过compileTestJava task 而是在执行该task的时候，跳过所有的测试文件
+    test {
+        exclude '**/*.class'
+    }
+
+    // 这里一定得要。在多模块下，不然编译失败，
+    // bootJar 默认会关闭 jar 任务
+    jar {
+        enabled = true
+    }
+
+    //指定编译的编码
+    tasks.withType(JavaCompile) {
+        options.encoding = "UTF-8"
+    }
+    
 }
