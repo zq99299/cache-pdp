@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="cn.mrcode.cachepdp.eshop.product.ha.mappter.UserMapper">
-    <select id="findUserInfo" resultType="cn.mrcode.cachepdp.eshop.product.ha.model.User">
+<mapper namespace="cn.mrcode.cachepdp.eshop.cache.ha.mappter.UserMapper">
+    <select id="findUserInfo" resultType="cn.mrcode.cachepdp.eshop.cache.ha.model.User">
 	  select name,age from user;
     </select>
 </mapper>

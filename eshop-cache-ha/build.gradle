@@ -12,4 +12,6 @@ dependencies {
     runtimeOnly 'mysql:mysql-connector-java:5.1.34'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     compile 'com.alibaba:fastjson:1.1.43'
+    compile 'org.apache.httpcomponents:httpclient'
+    compile 'com.netflix.hystrix:hystrix-core'
 }

@@ -1,10 +1,10 @@
 server:
-  port: 7000
+  port: 7001
 logging:
   level:
     root: info
     # 可以打印 sql
-    cn.mrcode.cachepdp.eshop.product.ha: info
+    cn.mrcode.cachepdp.eshop.cache.ha: info
     org.springframework.web: TRACE
 #  path: ./
 spring:
@@ -19,5 +19,5 @@ spring:
     time-zone: GMT+8
 
 mybatis:
-#  type-aliases-package: cn.mrcode.cachepdp.eshop.product.ha.model
+#  type-aliases-package: cn.mrcode.cachepdp.eshop.cache.ha.model
   mapper-locations: classpath*:mapper/*.xml
