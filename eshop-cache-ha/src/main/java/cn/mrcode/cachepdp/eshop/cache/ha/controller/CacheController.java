@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import cn.mrcode.cachepdp.eshop.cache.ha.http.HttpClientUtils;
+import cn.mrcode.cachepdp.eshop.cache.ha.hystrix.command.GetCityCommand;
 import cn.mrcode.cachepdp.eshop.cache.ha.hystrix.command.GetProductCommand;
 import cn.mrcode.cachepdp.eshop.cache.ha.hystrix.command.GetProductsCommand;
 import cn.mrcode.cachepdp.eshop.cache.ha.model.ProductInfo;
@@ -80,5 +81,13 @@ public class CacheController {
             System.out.println(iterator.next());
         }
         System.out.println("方法已执行完成");
+    }
+
+    @RequestMapping("/semaphore/getProduct")
+    public ProductInfo semaphoreGetProduct(Long productId) {
+        GetCityCommand getCityCommand = new GetCityCommand(productId);
+        System.out.println(Thread.currentThread().getName());
+        ProductInfo productInfo = getCityCommand.execute();
+        return productInfo;
     }
 }
