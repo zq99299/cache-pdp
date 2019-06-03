@@ -1,15 +1,15 @@
 package cn.mrcode.cachepdp.eshop.cache.ha.hystrix.command;
 
-        import com.alibaba.fastjson.JSON;
-        import com.netflix.hystrix.HystrixCommand;
-        import com.netflix.hystrix.HystrixCommandGroupKey;
-        import com.netflix.hystrix.HystrixCommandProperties;
-        import com.netflix.hystrix.HystrixThreadPoolProperties;
+import com.alibaba.fastjson.JSON;
+import com.netflix.hystrix.HystrixCommand;
+import com.netflix.hystrix.HystrixCommandGroupKey;
+import com.netflix.hystrix.HystrixCommandProperties;
+import com.netflix.hystrix.HystrixThreadPoolProperties;
 
-        import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeUnit;
 
-        import cn.mrcode.cachepdp.eshop.cache.ha.http.HttpClientUtils;
-        import cn.mrcode.cachepdp.eshop.cache.ha.model.ProductInfo;
+import cn.mrcode.cachepdp.eshop.cache.ha.http.HttpClientUtils;
+import cn.mrcode.cachepdp.eshop.cache.ha.model.ProductInfo;
 
 /**
  * ${todo}
@@ -38,6 +38,11 @@ public class GetProductCommand extends HystrixCommand<ProductInfo> {
 
         );
         this.productId = productId;
+    }
+
+    @Override
+    protected String getCacheKey() {
+        return String.valueOf(productId);
     }
 
     @Override

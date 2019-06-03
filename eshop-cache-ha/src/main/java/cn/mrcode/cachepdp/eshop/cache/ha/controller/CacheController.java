@@ -6,14 +6,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import cn.mrcode.cachepdp.eshop.cache.ha.http.HttpClientUtils;
 import cn.mrcode.cachepdp.eshop.cache.ha.hystrix.command.GetCityCommand;
 import cn.mrcode.cachepdp.eshop.cache.ha.hystrix.command.GetProductCommand;
-import cn.mrcode.cachepdp.eshop.cache.ha.hystrix.command.GetProductsCommand;
 import cn.mrcode.cachepdp.eshop.cache.ha.model.ProductInfo;
 
 /**
@@ -48,7 +46,12 @@ public class CacheController {
     @RequestMapping("/getProducts")
     public void getProduct(String productIds) {
         List<Long> pids = Arrays.stream(productIds.split(",")).map(Long::parseLong).collect(Collectors.toList());
-        GetProductsCommand getProductsCommand = new GetProductsCommand(pids.toArray(new Long[pids.size()]));
+        for (Long pid : pids) {
+            GetProductCommand getProductCommand = new GetProductCommand(pid);
+            getProductCommand.execute();
+            System.out.println("pid " + pid + "；是否来自缓存：" + getProductCommand.isResponseFromCache());
+        }
+//        GetProductsCommand getProductsCommand = new GetProductsCommand(pids.toArray(new Long[pids.size()]));
         // 第一种获取数据模式
 //        getProductsCommand.observe().subscribe(productInfo -> {
 //            System.out.println(productInfo);
@@ -76,10 +79,10 @@ public class CacheController {
 //            }
 //        });
         // 同步调用方式
-        Iterator<ProductInfo> iterator = getProductsCommand.observe().toBlocking().getIterator();
-        while (iterator.hasNext()) {
-            System.out.println(iterator.next());
-        }
+//        Iterator<ProductInfo> iterator = getProductsCommand.observe().toBlocking().getIterator();
+//        while (iterator.hasNext()) {
+//            System.out.println(iterator.next());
+//        }
         System.out.println("方法已执行完成");
     }
 
