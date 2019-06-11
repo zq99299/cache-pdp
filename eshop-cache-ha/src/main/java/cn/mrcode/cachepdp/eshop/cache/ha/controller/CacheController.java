@@ -7,9 +7,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import cn.mrcode.cachepdp.eshop.cache.ha.http.HttpClientUtils;
+import cn.mrcode.cachepdp.eshop.cache.ha.hystrix.command.CollapserGetProductCommand;
 import cn.mrcode.cachepdp.eshop.cache.ha.hystrix.command.GetCityCommand;
 import cn.mrcode.cachepdp.eshop.cache.ha.hystrix.command.GetProductCommand;
 import cn.mrcode.cachepdp.eshop.cache.ha.model.ProductInfo;
@@ -44,13 +47,30 @@ public class CacheController {
      * @param productIds 英文逗号分隔
      */
     @RequestMapping("/getProducts")
-    public void getProduct(String productIds) {
+    public void getProduct(String productIds) throws ExecutionException, InterruptedException {
         List<Long> pids = Arrays.stream(productIds.split(",")).map(Long::parseLong).collect(Collectors.toList());
-        for (Long pid : pids) {
-            GetProductCommand getProductCommand = new GetProductCommand(pid);
-            getProductCommand.execute();
-            System.out.println("pid " + pid + "；是否来自缓存：" + getProductCommand.isResponseFromCache());
+
+        // 在批量获取商品接口中来使用请求合并
+//        for (Long pid : pids) {
+//            CollapserGetProductCommand getProductCommand = new CollapserGetProductCommand(pid);
+//            Future<ProductInfo> queue = getProductCommand.queue();
+//            System.out.println("请求结果：" + queue.get() + ": 是否只请求合并：" + queue.isCancelled());
+//        }
+        // 不要使用上面的调用方式，因为这样做就相当于是同步调用了，一个请求回来之后才能继续下一个
+        List<Future<ProductInfo>> results = pids.stream()
+                .map(pid -> {
+                    CollapserGetProductCommand getProductCommand = new CollapserGetProductCommand(pid);
+                    return getProductCommand.queue();
+                })
+                .collect(Collectors.toList());
+        for (Future<ProductInfo> result : results) {
+            System.out.println("请求结果：" + result.get());
         }
+//        for (Long pid : pids) {
+//            GetProductCommand getProductCommand = new GetProductCommand(pid);
+//            getProductCommand.execute();
+//            System.out.println("pid " + pid + "；是否来自缓存：" + getProductCommand.isResponseFromCache());
+//        }
 //        GetProductsCommand getProductsCommand = new GetProductsCommand(pids.toArray(new Long[pids.size()]));
         // 第一种获取数据模式
 //        getProductsCommand.observe().subscribe(productInfo -> {

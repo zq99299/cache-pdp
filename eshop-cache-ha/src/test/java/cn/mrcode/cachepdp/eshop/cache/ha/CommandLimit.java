@@ -30,7 +30,9 @@ public class CommandLimit extends HystrixCommand<String> {
                         .withQueueSizeRejectionThreshold(2)
                 )
                 .andCommandPropertiesDefaults(HystrixCommandProperties.Setter()
-                        .withExecutionTimeoutInMilliseconds(2000)) // 修改为 2 秒超时
+                        .withExecutionTimeoutInMilliseconds(2000)
+                        .withExecutionTimeoutEnabled(true)
+                ) // 修改为 2 秒超时
         );
     }
 
