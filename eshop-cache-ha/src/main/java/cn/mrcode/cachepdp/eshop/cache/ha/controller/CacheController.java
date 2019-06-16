@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import cn.mrcode.cachepdp.eshop.cache.ha.http.HttpClientUtils;
 import cn.mrcode.cachepdp.eshop.cache.ha.hystrix.command.CollapserGetProductCommand;
 import cn.mrcode.cachepdp.eshop.cache.ha.hystrix.command.GetCityCommand;
-import cn.mrcode.cachepdp.eshop.cache.ha.hystrix.command.GetProductCommand;
+import cn.mrcode.cachepdp.eshop.cache.ha.hystrix.command.GetProductCommand2;
 import cn.mrcode.cachepdp.eshop.cache.ha.model.ProductInfo;
 
 /**
@@ -37,7 +37,7 @@ public class CacheController {
 
     @RequestMapping("/getProduct")
     public ProductInfo getProduct(Long productId) {
-        GetProductCommand getProductCommand = new GetProductCommand(productId);
+        GetProductCommand2 getProductCommand = new GetProductCommand2(productId);
         // 同步执行
         ProductInfo productInfo = getProductCommand.execute();
         return productInfo;

@@ -13,5 +13,6 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     compile 'com.alibaba:fastjson:1.1.43'
     compile 'org.apache.httpcomponents:httpclient'
-    compile 'com.netflix.hystrix:hystrix-core'
+    compile 'com.netflix.hystrix:hystrix-core:1.5.12'
+    compile 'com.netflix.hystrix:hystrix-metrics-event-stream:1.4.10'
 }
