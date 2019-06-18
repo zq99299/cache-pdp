@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import cn.mrcode.cachepdp.eshop.cache.ha.http.HttpClientUtils;
 import cn.mrcode.cachepdp.eshop.cache.ha.hystrix.command.CollapserGetProductCommand;
@@ -40,6 +41,14 @@ public class CacheController {
         GetProductCommand2 getProductCommand = new GetProductCommand2(productId);
         // 同步执行
         ProductInfo productInfo = getProductCommand.execute();
+
+        // 测试队列参数等
+        IntStream.range(0, productId.intValue())
+                .parallel()
+                .mapToObj(item -> new Thread(() -> {
+                    new GetProductCommand2(productId).execute();
+                }))
+                .forEach(item -> item.start());
         return productInfo;
     }
 
