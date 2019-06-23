@@ -20,20 +20,21 @@ public class GetProductCommand2 extends HystrixCommand<ProductInfo> {
 
     public GetProductCommand2(Long productId) {
         super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey("GetProductCommandGroup"))
-                // 不同的线程池
-                .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey("GetProductCommand2Pool"))
+                        // 不同的线程池
+                        .andThreadPoolKey(HystrixThreadPoolKey.Factory.asKey("GetProductCommand2Pool"))
                         .andThreadPoolPropertiesDefaults(HystrixThreadPoolProperties.Setter()
                                         // 配置线程池大小，同时并发能力个数
-                                        .withCoreSize(5)
+                                        .withCoreSize(10)
                                         // 设置线程池的最大大小，只有在设置 allowMaximumSizeToDivergeFromCoreSize 的时候才能生效
-                                        .withMaximumSize(10)
+                                        .withMaximumSize(50)
                                         // 设置之后，其实 coreSize 就失效了
                                         .withAllowMaximumSizeToDivergeFromCoreSize(true)
                                         // 设置保持存活的时间，单位是分钟，默认是 1
                                         // 当线程池中线程空闲超过该时间之后，就会被销毁
                                         .withKeepAliveTimeMinutes(1)
-                                // 配置等待线程个数；如果不配置该项，则没有等待，超过则拒绝
-//                        .withMaxQueueSize(5)
+                                        // 配置等待线程个数；如果不配置该项，则没有等待，超过则拒绝
+//                                        .withMaxQueueSize(20)
+//                                        .withQueueSizeRejectionThreshold(20)
                                 // 由于 maxQueueSize 是初始化固定的，该配置项是动态调整最大等待数量的
                                 // 可以热更新；规则：只能比 MaxQueueSize 小，
 //                        .withQueueSizeRejectionThreshold(2)
@@ -59,11 +60,11 @@ public class GetProductCommand2 extends HystrixCommand<ProductInfo> {
         return JSON.parseObject(response, ProductInfo.class);
     }
 
-    @Override
-    protected ProductInfo getFallback() {
-        System.out.println("正常流程降级策略");
-        return new CommandWithFallbackViaNetwork(productId).execute();
-    }
+//    @Override
+//    protected ProductInfo getFallback() {
+//        System.out.println("正常流程降级策略");
+//        return new CommandWithFallbackViaNetwork(productId).execute();
+//    }
 
     public class CommandWithFallbackViaNetwork extends HystrixCommand<ProductInfo> {
         private Long productId;
