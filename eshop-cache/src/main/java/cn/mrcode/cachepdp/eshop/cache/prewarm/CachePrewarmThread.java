@@ -62,7 +62,7 @@ public class CachePrewarmThread extends Thread {
                 ProductInfo productInfo = getProduct(pid);
                 System.out.println("预热缓存信息：" + productInfo);
                 cacheService.saveProductInfo2LocalCache(productInfo);
-                cacheService.saveProductInfo2ReidsCache(productInfo);
+                cacheService.saveProductInfo2RedisCache(productInfo);
             });
 
             // 修改预热状态

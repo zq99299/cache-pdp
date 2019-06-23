@@ -80,7 +80,7 @@ public class KafkaMessageProcessor implements Runnable {
             log.info("kafka 休眠 10 秒");
             TimeUnit.SECONDS.sleep(10);
             // 先获取一次 redis ，防止其他实例已经放入数据了
-            ProductInfo existedProduct = cacheService.getProductInfoOfReidsCache(productId);
+            ProductInfo existedProduct = cacheService.getProductInfoOfRedisCache(productId);
             if (existedProduct != null) {
                 // 判定通过消息获取到的数据版本和 redis 中的谁最新
                 Date existedModifyTime = existedProduct.getModifyTime();
@@ -89,7 +89,7 @@ public class KafkaMessageProcessor implements Runnable {
                 if (modifyTime.after(existedModifyTime)) {
                     cacheService.saveProductInfo2LocalCache(productInfo);
                     log.info("最新数据覆盖 redis 中的数据：" + cacheService.getProductInfoFromLocalCache(productId));
-                    cacheService.saveProductInfo2ReidsCache(productInfo);
+                    cacheService.saveProductInfo2RedisCache(productInfo);
                 } else {
                     log.info("数据未变更过");
                 }
@@ -97,7 +97,7 @@ public class KafkaMessageProcessor implements Runnable {
                 // redis 中没有数据，直接放入
                 cacheService.saveProductInfo2LocalCache(productInfo);
                 log.info("获取刚保存到本地缓存的商品信息：" + cacheService.getProductInfoFromLocalCache(productId));
-                cacheService.saveProductInfo2ReidsCache(productInfo);
+                cacheService.saveProductInfo2RedisCache(productInfo);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -120,6 +120,6 @@ public class KafkaMessageProcessor implements Runnable {
         ShopInfo shopInfo = JSONObject.parseObject(shopInfoJSON, ShopInfo.class);
         cacheService.saveShopInfo2LocalCache(shopInfo);
         log.info("获取刚保存到本地缓存的店铺信息：" + cacheService.getShopInfoFromLocalCache(shopId));
-        cacheService.saveShopInfo2ReidsCache(shopInfo);
+        cacheService.saveShopInfo2RedisCache(shopInfo);
     }
 }

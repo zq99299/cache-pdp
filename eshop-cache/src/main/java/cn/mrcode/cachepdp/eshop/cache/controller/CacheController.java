@@ -1,7 +1,5 @@
 package cn.mrcode.cachepdp.eshop.cache.controller;
 
-import com.alibaba.fastjson.JSONObject;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +7,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import cn.mrcode.cachepdp.eshop.cache.command.GetProductInfoOfMysqlCommand;
 import cn.mrcode.cachepdp.eshop.cache.model.ProductInfo;
 import cn.mrcode.cachepdp.eshop.cache.model.ShopInfo;
 import cn.mrcode.cachepdp.eshop.cache.service.CacheService;
@@ -46,7 +45,7 @@ public class CacheController {
     @RequestMapping("/getProductInfo")
     @ResponseBody
     public ProductInfo getProductInfo(Long productId) {
-        ProductInfo productInfo = cacheService.getProductInfoOfReidsCache(productId);
+        ProductInfo productInfo = cacheService.getProductInfoOfRedisCache(productId);
         log.info("从 redis 中获取商品信息");
         if (productInfo == null) {
             productInfo = cacheService.getProductInfoFromLocalCache(productId);
@@ -55,9 +54,11 @@ public class CacheController {
         if (productInfo == null) {
             // 两级缓存中都获取不到数据，那么就需要从数据源重新拉取数据，重建缓存
             // 假设这里从数据库中获取的数据
-            String productInfoJSON = "{\"id\": 1, \"name\": \"iphone7手机\", \"price\": 5599, \"pictureList\":\"a.jpg,b.jpg\", \"specification\": \"iphone7的规格\", \"service\": \"iphone7的售后服务\", \"color\": \"红色,白色,黑色\", \"size\": \"5.5\", \"shopId\": 1," +
-                    "\"modifyTime\":\"2019-05-13 22:00:00\"}";
-            productInfo = JSONObject.parseObject(productInfoJSON, ProductInfo.class);
+//            String productInfoJSON = "{\"id\": 1, \"name\": \"iphone7手机\", \"price\": 5599, \"pictureList\":\"a.jpg,b.jpg\", \"specification\": \"iphone7的规格\", \"service\": \"iphone7的售后服务\", \"color\": \"红色,白色,黑色\", \"size\": \"5.5\", \"shopId\": 1," +
+//                    "\"modifyTime\":\"2019-05-13 22:00:00\"}";
+//            productInfo = JSONObject.parseObject(productInfoJSON, ProductInfo.class);
+            GetProductInfoOfMysqlCommand command = new GetProductInfoOfMysqlCommand(productId);
+            productInfo = command.execute();
             rebuildCache.put(productInfo);
         }
         return productInfo;
@@ -66,7 +67,7 @@ public class CacheController {
     @RequestMapping("/getShopInfo")
     @ResponseBody
     public ShopInfo getShopInfo(Long shopId) {
-        ShopInfo shopInfo = cacheService.getShopInfoOfReidsCache(shopId);
+        ShopInfo shopInfo = cacheService.getShopInfoOfRedisCache(shopId);
         log.info("从 redis 中获取店铺信息");
         if (shopInfo == null) {
             shopInfo = cacheService.getShopInfoFromLocalCache(shopId);

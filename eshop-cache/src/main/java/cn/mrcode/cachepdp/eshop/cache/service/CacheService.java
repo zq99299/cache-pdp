@@ -44,20 +44,20 @@ public interface CacheService {
     /**
      * 将商品信息保存到redis中
      */
-    void saveProductInfo2ReidsCache(ProductInfo productInfo);
+    void saveProductInfo2RedisCache(ProductInfo productInfo);
 
     /**
      * 将店铺信息保存到redis中
      */
-    void saveShopInfo2ReidsCache(ShopInfo shopInfo);
+    void saveShopInfo2RedisCache(ShopInfo shopInfo);
 
     /**
      * 从 redis 中获取商品
      */
-    ProductInfo getProductInfoOfReidsCache(Long productId);
+    ProductInfo getProductInfoOfRedisCache(Long productId);
 
     /**
      * 从 redis 中获取店铺信息
      */
-    ShopInfo getShopInfoOfReidsCache(Long shopId);
+    ShopInfo getShopInfoOfRedisCache(Long shopId);
 }

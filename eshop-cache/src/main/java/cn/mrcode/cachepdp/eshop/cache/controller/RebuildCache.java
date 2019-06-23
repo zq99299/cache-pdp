@@ -58,7 +58,7 @@ public class RebuildCache {
                     zks.acquireDistributedLock(productId);
                     try {
                         // 先获取一次 redis ，防止其他实例已经放入数据了
-                        ProductInfo existedProduct = cacheService.getProductInfoOfReidsCache(productId);
+                        ProductInfo existedProduct = cacheService.getProductInfoOfRedisCache(productId);
                         if (existedProduct != null) {
                             // 判定通过消息获取到的数据版本和 redis 中的谁最新
                             Date existedModifyTime = existedProduct.getModifyTime();
@@ -67,7 +67,7 @@ public class RebuildCache {
                             if (modifyTime.after(existedModifyTime)) {
                                 cacheService.saveProductInfo2LocalCache(productInfo);
                                 log.info("最新数据覆盖 redis 中的数据：" + cacheService.getProductInfoFromLocalCache(productId));
-                                cacheService.saveProductInfo2ReidsCache(productInfo);
+                                cacheService.saveProductInfo2RedisCache(productInfo);
                             } else {
                                 log.info("此次数据版本落后，放弃重建");
                             }
@@ -75,7 +75,7 @@ public class RebuildCache {
                             // redis 中没有数据，直接放入
                             cacheService.saveProductInfo2LocalCache(productInfo);
                             log.info("缓存重建成功：" + cacheService.getProductInfoFromLocalCache(productId));
-                            cacheService.saveProductInfo2ReidsCache(productInfo);
+                            cacheService.saveProductInfo2RedisCache(productInfo);
                         }
                     } finally {
                         // 最后释放锁
