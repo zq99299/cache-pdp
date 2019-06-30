@@ -27,6 +27,14 @@ public class GetProductInfoOfMysqlCommand extends HystrixCommand<ProductInfo> {
 
     @Override
     protected ProductInfo run() throws Exception {
+        // 假设 100 的 id 是数据库中不存在的
+        // 这里返回一个空的
+        // 这里只是模拟从 mysql 查询
+        if (productId == 100) {
+            ProductInfo productInfo = new ProductInfo();
+            productInfo.setId(productId);
+            return productInfo;
+        }
         String productInfoJSON = "{\"id\": 1, \"name\": \"iphone7手机\", \"price\": 5599, \"pictureList\":\"a.jpg,b.jpg\", \"specification\": \"iphone7的规格\", \"service\": \"iphone7的售后服务\", \"color\": \"红色,白色,黑色\", \"size\": \"5.5\", \"shopId\": 1," +
                 "\"modifyTime\":\"2019-05-13 22:00:00\"}";
         ProductInfo productInfo = JSONObject.parseObject(productInfoJSON, ProductInfo.class);
